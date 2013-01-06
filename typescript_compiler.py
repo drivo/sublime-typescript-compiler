@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Author: Guido D'Albore
-# Official Repository: https://github.com/setumiami/sublime-text-2-typescript
+# Official Repository: https://github.com/setumiami/sublime-typescript-compiler
 # CommandThread class is based on Git sublime package (https://github.com/kemayo/sublime-text-2-git)
 
 import sublime, sublime_plugin

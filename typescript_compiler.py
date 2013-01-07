@@ -10,17 +10,36 @@ import threading
 import functools
 import tempfile
 
+DEBUG = True
+
+# Used in case the configuration is not found in 'sublime.settings'
+DEFAULT_NODE_PATH       = '/usr/local/bin/node'
+DEFAULT_TYPESCRIPT_PATH = '/usr/local/share/npm/bin/tsc'
+
 class TypescriptCommand(sublime_plugin.TextCommand): 
     def run(self, edit):
-        print("TypeScript Compiler running...")
-        print("Working dir: %s" % self.get_working_dir())
+        self.config          = sublime.load_settings("TypeScript Compiler.sublime-settings")
+        self.node_path       = DEFAULT_NODE_PATH
+        self.typescript_path = DEFAULT_TYPESCRIPT_PATH
+
+        if(self.config):
+            if(self.config.get("node_path")):
+                self.node_path = config.get("node_path")
+            if(self.config.get("typescript_path")):
+                self.node_path = config.get("typescript_path")
+
+        if(DEBUG):
+            print("* TypeScript Compiler running...")
+            print("  - Node.js path: %s" % self.node_path)
+            print("  - TypeScript complier path: %s" % self.typescript_path)
 
         source = self.get_content();
         print("%s" % source);
         
         self.compile(str(source))
         
-        print("TypeScript Compiler finished.")
+        if(DEBUG):
+            print("--TypeScript Compiler finished--")
 
     def get_content(self):
         view = self.view
@@ -39,17 +58,21 @@ class TypescriptCommand(sublime_plugin.TextCommand):
         self.sourcefile = f
         self.sourcefile.write(source)
         self.sourcefile.close()
-        print "Source TypeScript file: %s" % self.sourcefile.name
+
+        if(DEBUG):
+            print "  - Source TypeScript file: %s" % self.sourcefile.name
 
         # Create JavaScript destination file
         f = tempfile.NamedTemporaryFile(prefix = 'tsc_', suffix = '.js', delete = False)
         self.destinationfile = f
         self.destinationfile.write(source)
         self.destinationfile.close()
-        print "Source TypeScript file: %s" % self.destinationfile.name
 
-        commandline = [ '/usr/local/bin/node', 
-                        '/usr/local/share/npm/bin/tsc',
+        if(DEBUG):
+            print "  - Destination plain JavaScript file: %s" % self.destinationfile.name
+
+        commandline = [ self.node_path, 
+                        self.typescript_path,
                         '--out',
                         self.destinationfile.name,
                         self.sourcefile.name];
@@ -142,6 +165,6 @@ class CommandThread(threading.Thread):
             main_thread(self.on_done, e.returncode)
         except OSError, e:
             if e.errno == 2:
-                main_thread(sublime.error_message, "Git binary could not be found in PATH\n\nConsider using the git_command setting for the Git plugin\n\nPATH is: %s" % os.environ['PATH'])
+                main_thread(sublime.error_message, "Node.js or TypeScript Complier (tsc) binary could not be found in PATH\n\nPATH is: %s" % os.environ['PATH'])
             else:
                 raise e

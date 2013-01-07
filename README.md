@@ -20,7 +20,7 @@ Install this repository via [Package Control](http://wbond.net/sublime_packages/
 
 ## Configuration
 
-The package uses (Node.js)[http://nodejs.org/] and (TypeScript Compiler)[http://www.typescriptlang.org/].
+The package uses [Node.js](http://nodejs.org/) and [TypeScript Compiler](http://www.typescriptlang.org/).
 
 Default configuration is the following:
 

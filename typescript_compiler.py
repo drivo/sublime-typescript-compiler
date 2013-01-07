@@ -9,12 +9,13 @@ import subprocess
 import threading
 import functools
 import tempfile
+import re
 
 DEBUG = True
 
 # Used in case the configuration is not found in 'sublime.settings'
 DEFAULT_NODE_PATH       = '/usr/local/bin/node'
-DEFAULT_TYPESCRIPT_PATH = '/usr/local/share/npm/bin/tsc'
+DEFAULT_TYPESCRIPT_PATH = '/usr/local/bin/tsc'
 
 class TypescriptCommand(sublime_plugin.TextCommand): 
     def run(self, edit):
@@ -24,9 +25,9 @@ class TypescriptCommand(sublime_plugin.TextCommand):
 
         if(self.config):
             if(self.config.get("node_path")):
-                self.node_path = config.get("node_path")
+                self.node_path = self.config.get("node_path")
             if(self.config.get("typescript_path")):
-                self.node_path = config.get("typescript_path")
+                self.typescript_path = self.config.get("typescript_path")
 
         if(DEBUG):
             print("* TypeScript Compiler running...")
@@ -34,13 +35,9 @@ class TypescriptCommand(sublime_plugin.TextCommand):
             print("  - TypeScript complier path: %s" % self.typescript_path)
 
         source = self.get_content();
-        print("%s" % source);
         
         self.compile(str(source))
         
-        if(DEBUG):
-            print("--TypeScript Compiler finished--")
-
     def get_content(self):
         view = self.view
         regions = view.sel()
@@ -52,7 +49,6 @@ class TypescriptCommand(sublime_plugin.TextCommand):
                 return view.substr(view_content)
 
     def compile(self, source):
-        print source
         # Create TypeScript source file
         f = tempfile.NamedTemporaryFile(prefix = 'tsc_', suffix = '.ts', delete = False)
         self.sourcefile = f
@@ -65,13 +61,13 @@ class TypescriptCommand(sublime_plugin.TextCommand):
         # Create JavaScript destination file
         f = tempfile.NamedTemporaryFile(prefix = 'tsc_', suffix = '.js', delete = False)
         self.destinationfile = f
-        self.destinationfile.write(source)
+        #self.destinationfile.write(source)
         self.destinationfile.close()
 
         if(DEBUG):
             print "  - Destination plain JavaScript file: %s" % self.destinationfile.name
 
-        commandline = [ self.node_path, 
+        commandline = [ self.node_path,
                         self.typescript_path,
                         '--out',
                         self.destinationfile.name,
@@ -97,10 +93,21 @@ class TypescriptCommand(sublime_plugin.TextCommand):
                 return ''
 
     def onDone(self, result):
-        sublime.active_window().open_file(self.destinationfile.name)
-        sublime.active_window().active_view().set_syntax_file("Packages/JavaScript/JavaScript.tmLanguage")
-        print("onDone called...")
-        print(result)
+        if(DEBUG):
+            print("--TypeScript Compiler finished--")
+
+        if(re.search(".*TypeError.*", result, re.MULTILINE)):
+            w = self.view.window()
+            w.new_file()
+            w.active_view().set_read_only(False)
+            edit = w.active_view().begin_edit()
+            w.active_view().insert(edit, w.active_view().size(), result)
+            w.active_view().end_edit(edit)
+            w.active_view().set_read_only(True)
+        else:
+            sublime.active_window().open_file(self.destinationfile.name)
+            sublime.active_window().active_view().set_syntax_file("Packages/JavaScript/JavaScript.tmLanguage")
+            
 
 def main_thread(callback, *args, **kwargs):
     # sublime.set_timeout gets used to send things onto the main thread

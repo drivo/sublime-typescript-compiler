@@ -1,0 +1,4 @@
+{
+    "node_path"       : "/usr/local/bin/node",
+    "typescript_path" : "/usr/local/bin/tsc"
+}

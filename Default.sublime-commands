@@ -1,0 +1,6 @@
+[
+    {
+        "caption": "Compile TypeScript",
+        "command": "typescript"
+    }
+]

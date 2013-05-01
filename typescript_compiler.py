@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Author: Guido D'Albore
+# Version: 0.1.1
 # Official Repository: https://github.com/setumiami/sublime-typescript-compiler
 # CommandThread class is based on Git sublime package (https://github.com/kemayo/sublime-text-2-git)
 
@@ -38,7 +39,7 @@ class TypescriptCommand(sublime_plugin.TextCommand):
         
         self.compile(str(source))
         
-    def get_content(self):
+    def get_content(self):            
         view = self.view
         regions = view.sel()
 
@@ -49,54 +50,60 @@ class TypescriptCommand(sublime_plugin.TextCommand):
                 return view.substr(view_content)
 
     def compile(self, source):
-        # Create TypeScript source file
-        f = tempfile.NamedTemporaryFile(prefix = 'tsc_', suffix = '.ts', delete = False)
-        self.sourcefile = f
-        self.sourcefile.write(source)
-        self.sourcefile.close()
+        if(self.view.file_name() != None):
+            self.sourcefilename = self.view.file_name()
+            self.destinationfilename = os.path.splitext(self.sourcefilename)[0]
+            self.destinationfilename += ".js"
+        else:
+            # File doesn't exist on disk, it will be created in temp directory
+
+            # Create TypeScript source file
+            f = tempfile.NamedTemporaryFile(prefix = 'tsc_', suffix = '.ts', delete = False)
+            self.sourcefile = f
+            self.sourcefile.write(source)
+            self.sourcefile.close()
+            self.sourcefilename = self.sourcefile.name;
+
+
+            # Create JavaScript destination file
+            f = tempfile.NamedTemporaryFile(prefix = 'tsc_', suffix = '.js', delete = False)
+            self.destinationfile = f
+            #self.destinationfile.write(source)
+            self.destinationfile.close()
+            self.destinationfilename = self.destinationfile.name
+
+        self.workingdir = os.path.split(self.sourcefilename)[0]
 
         if(DEBUG):
-            print "  - Source TypeScript file: %s" % self.sourcefile.name
-
-        # Create JavaScript destination file
-        f = tempfile.NamedTemporaryFile(prefix = 'tsc_', suffix = '.js', delete = False)
-        self.destinationfile = f
-        #self.destinationfile.write(source)
-        self.destinationfile.close()
-
-        if(DEBUG):
-            print "  - Destination plain JavaScript file: %s" % self.destinationfile.name
+            print "  - Source TypeScript file: %s" % self.sourcefilename
+            print "  - Destination plain JavaScript file: %s" % self.destinationfilename
+            print "  - Working directory: %s" % self.workingdir
 
         commandline = [ self.node_path,
                         self.typescript_path,
                         '--out',
-                        self.destinationfile.name,
-                        self.sourcefile.name];
+                        self.destinationfilename,
+                        self.sourcefilename];
 
-        command = CommandThread(commandline, self.onDone, self.get_working_dir())
+        command = CommandThread(commandline, self.onDone, self.workingdir)
         command.start()
-
-    def get_working_dir(self):
-        file_name = None
-
-        view = self.view
-
-        if view and view.file_name() and len(view.file_name()) > 0:
-            file_name = view.file_name()
-
-        if file_name:
-            return os.path.realpath(os.path.dirname(file_name))
-        else:
-            try:  # handle case with no open folder
-                return self.window.folders()[0]
-            except IndexError:
-                return ''
 
     def onDone(self, result):
         if(DEBUG):
+            print("  - Result: %s" % result)
             print("--TypeScript Compiler finished--")
 
-        if(re.search(".*TypeError.*", result, re.MULTILINE)):
+        showerror = False
+
+        if(re.search(".*TypeError.*", result, re.MULTILINE)): 
+            showerror = True
+            result = "*** Your TypeScript contains errors ***\n\n" + result
+
+        if(re.search(".*Cannot find module.*", result, re.MULTILINE) or (not os.path.isfile(self.destinationfilename))): 
+            showerror = True
+            result = "*** Your TypeScript compiler is not properly configured. ***\n*** Check your Preferences (menu 'Preferences/Package Settings/TypeScript Compiler') and retry. ***\n\n" + result
+
+        if(showerror):
             w = self.view.window()
             w.new_file()
             w.active_view().set_read_only(False)
@@ -105,9 +112,8 @@ class TypescriptCommand(sublime_plugin.TextCommand):
             w.active_view().end_edit(edit)
             w.active_view().set_read_only(True)
         else:
-            sublime.active_window().open_file(self.destinationfile.name)
-            sublime.active_window().active_view().set_syntax_file("Packages/JavaScript/JavaScript.tmLanguage")
-            
+            sublime.active_window().open_file(self.destinationfilename)
+            sublime.active_window().active_view().set_syntax_file("Packages/JavaScript/JavaScript.tmLanguage")            
 
 def main_thread(callback, *args, **kwargs):
     # sublime.set_timeout gets used to send things onto the main thread

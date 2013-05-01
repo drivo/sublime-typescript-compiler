@@ -22,7 +22,7 @@ Install this repository via [Package Control](http://wbond.net/sublime_packages/
 
 The package uses [Node.js](http://nodejs.org/) and [TypeScript Compiler](http://www.typescriptlang.org/). They must be installed before running the compiler.
 
-Default configuration is the following:
+Default configuration, you can find in the Sublime preference menu (Preferences/Package Settings/TypeScript Compiler), is the following:
 
 * `node_path: "/usr/local/bin/node"`
 * `typescript_path:"/usr/local/share/npm/bin/tsc"`

@@ -28,3 +28,11 @@ Default configuration, you can find in the Sublime preference menu (Preferences/
 * `typescript_path:"/usr/local/share/npm/bin/tsc"`
 
 You can change it in according to your operating system.
+
+Typical exemple for windows users:
+```json
+{
+    "node_path"       : "C:\\Program Files\\nodejs\\node.exe",
+    "typescript_path" : "C:\\Users\\User_Name\\AppData\\Roaming\\npm\\node_modules\\typescript\\bin\\tsc"
+}
+```

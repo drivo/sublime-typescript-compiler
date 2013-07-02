@@ -1,4 +1,5 @@
 {
     "node_path"       : "/usr/local/bin/node",
-    "typescript_path" : "/usr/local/share/npm/bin/tsc"
+    "typescript_path" : "/usr/local/share/npm/bin/tsc",
+    "output_folder"	  : ""
 }

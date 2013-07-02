@@ -17,18 +17,22 @@ DEBUG = True
 # Used in case the configuration is not found in 'sublime.settings'
 DEFAULT_NODE_PATH       = '/usr/local/bin/node'
 DEFAULT_TYPESCRIPT_PATH = '/usr/local/bin/tsc'
+DEFAULT_OUTPUT_FOLDER   = ''
 
 class TypescriptCommand(sublime_plugin.TextCommand): 
     def run(self, edit):
         self.config          = sublime.load_settings("TypeScript Compiler.sublime-settings")
         self.node_path       = DEFAULT_NODE_PATH
         self.typescript_path = DEFAULT_TYPESCRIPT_PATH
+        self.output_folder   = DEFAULT_OUTPUT_FOLDER
 
         if(self.config):
             if(self.config.get("node_path")):
                 self.node_path = self.config.get("node_path")
             if(self.config.get("typescript_path")):
                 self.typescript_path = self.config.get("typescript_path")
+            if(self.config.get("output_folder")):
+                self.output_folder = self.config.get("output_folder")
 
         if(DEBUG):
             print("* TypeScript Compiler running...")
@@ -54,6 +58,9 @@ class TypescriptCommand(sublime_plugin.TextCommand):
             self.sourcefilename = self.view.file_name()
             self.destinationfilename = os.path.splitext(self.sourcefilename)[0]
             self.destinationfilename += ".js"
+            slashtype = os.path.normpath("/");
+            filename = self.destinationfilename.split(slashtype)[-1]
+            self.destinationfilename = self.destinationfilename.replace(filename, self.output_folder + "\\"+filename)
         else:
             # File doesn't exist on disk, it will be created in temp directory
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Author: Guido D'Albore
-# Version: 0.1.1
+# Version: 0.1.2
 # Official Repository: https://github.com/setumiami/sublime-typescript-compiler
 # CommandThread class is based on Git sublime package (https://github.com/kemayo/sublime-text-2-git)
 
@@ -85,7 +85,7 @@ class TypescriptCommand(sublime_plugin.TextCommand):
                         self.destinationfilename,
                         self.sourcefilename];
 
-        command = CommandThread(commandline, self.onDone, self.workingdir)
+        command = CommandThread(commandline, self.onDone, self.workingdir, "ISO 8859-1")
         command.start()
 
     def onDone(self, result):
@@ -126,9 +126,12 @@ def _make_text_safeish(text, fallback_encoding, method='decode'):
     # distinctly non-ideal... and there's no way to tell what's coming out of
     # git in output. So...
     try:
-        unitext = getattr(text, method)('utf-8')
+        unitext = getattr(text, method)('UTF-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
         unitext = getattr(text, method)(fallback_encoding)
+    except (LookupError):
+        unitext = getattr(text, method)(fallback_encoding)
+
     return unitext
 
 # CommandThread comes from Git sublime package
